@@ -4,13 +4,9 @@ import java.util.ArrayList;
 
 import com.asmejia93.articles.constants.ArticleType;
 
-import jakarta.validation.constraints.NotBlank;
-
 public class Article implements Comparable<Article> {
     private int id;
-    @NotBlank(message = "Cannot be null/empty")
     private String title;
-    @NotBlank(message = "Cannot be null/empty")
     private String body;
     private ArticleType type;
 

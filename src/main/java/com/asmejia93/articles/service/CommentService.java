@@ -17,7 +17,6 @@ public class CommentService implements CrudRepository<Comment> {
         return comments;
     }
 
-    @Override
     public Comment findById(int id) {
         return comments.stream()
                 .filter(c -> c.getId() == id)
@@ -25,20 +24,17 @@ public class CommentService implements CrudRepository<Comment> {
                 .orElseThrow(() -> new NotFoundException("Comment not found"));
     }
 
-    @Override
     public Comment save(Comment entity) {
         comments.add(entity);
         return entity;
     }
 
-    @Override
     public Comment update(int id, Comment entity) {
         comments.removeIf((item) -> item.getId() == id);
         comments.add(entity);
         return entity;
     }
 
-    @Override
     public void delete(int id) {
         comments.removeIf((item) -> item.getId() == id);
     }

@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.asmejia93.articles.dto.CommentDto;
 import com.asmejia93.articles.model.Article;
 import com.asmejia93.articles.model.Comment;
 import com.asmejia93.articles.service.ArticleService;
@@ -40,40 +41,46 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CommentControllerTestCandidate {
-    private List<Comment> comments;
-    private List<Article> articles;
+        private List<Comment> comments;
+        private List<Article> articles;
 
-    private final Integer articleId = 1;
-    private final Integer commentId = 1;
-    private Article mockArticle;
-    private Comment mockComment;
+        private final Integer articleId = 1;
+        private final Integer commentId = 1;
+        private Article mockArticle;
+        private Comment mockComment;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        private static final String CANNOT_EMPTY_OR_NULL = "Cannot be null/empty";
+        private static final String CANNOT_NULL = "Cannot be null";
+        private static final String EMAIL_VALIDATION_MESSAGE = "The email must be valid";
 
-    @MockBean
-    private ArticleService articleService;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private CommentService commentService;
+        @MockBean
+        private ArticleService articleService;
 
-    @Autowired
-    private MockMvc mockMvc;
+        @MockBean
+        private CommentService commentService;
 
-    @Before
-    public void setUp() {
-        Article article1 = new Article(1, randomAlphabetic(10), randomAlphabetic(200), CASE_STUDY, newArrayList());
-        Article article2 = new Article(2, randomAlphabetic(10), randomAlphabetic(200), EMPIRICAL_STUDY, newArrayList());
+        @Autowired
+        private MockMvc mockMvc;
 
-        Comment comment1 = new Comment(1, article1, "test@gmail.com", randomAlphabetic(100));
-        Comment comment2 = new Comment(2, article1, "test2@gmail.com", randomAlphabetic(100));
-        Comment comment3 = new Comment(3, article2, "test3@gmail.com", randomAlphabetic(100));
+        @Before
+        public void setUp() {
+                Article article1 = new Article(1, randomAlphabetic(10), randomAlphabetic(200), CASE_STUDY,
+                                newArrayList());
+                Article article2 = new Article(2, randomAlphabetic(10), randomAlphabetic(200), EMPIRICAL_STUDY,
+                                newArrayList());
 
-        comments = newArrayList(comment1, comment2, comment3);
-        articles = newArrayList(article1, article2);
-        ArticleService.articles = articles;
-        CommentService.comments = comments;
-    }
+                Comment comment1 = new Comment(1, article1, "test@gmail.com", randomAlphabetic(100));
+                Comment comment2 = new Comment(2, article1, "test2@gmail.com", randomAlphabetic(100));
+                Comment comment3 = new Comment(3, article2, "test3@gmail.com", randomAlphabetic(100));
+
+                comments = newArrayList(comment1, comment2, comment3);
+                articles = newArrayList(article1, article2);
+                ArticleService.articles = articles;
+                CommentService.comments = comments;
+        }
 
     @Test
     public void shouldRetrieveAllComments() throws Exception {
@@ -84,60 +91,108 @@ public class CommentControllerTestCandidate {
                 .andExpect(jsonPath("$", hasSize(comments.size())));
     }
 
-    @Test
-    public void shouldRetrieveACommentById() throws Exception {
-        mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
-        mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
+        @Test
+        public void shouldRetrieveACommentById() throws Exception {
+                mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
+                mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
 
-        when(articleService.findById(articleId)).thenReturn(mockArticle);
-        when(commentService.findById(commentId)).thenReturn(mockComment);
+                when(articleService.findById(articleId)).thenReturn(mockArticle);
+                when(commentService.findById(commentId)).thenReturn(mockComment);
 
-        this.mockMvc.perform(get("/comments/{id}", commentId).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
-                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())));
-    }
+                this.mockMvc.perform(get("/comments/{id}", commentId).contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
+                                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())));
+        }
 
-    @Test
-    public void shouldCreateAComment() throws Exception {
-        Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
-        Comment mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
+        @Test
+        public void shouldCreateAComment() throws Exception {
+                Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
+                Comment mockComment = new Comment(commentId, mockArticle, "test@gmail.com", "test m");
 
-        when(articleService.findById(articleId)).thenReturn(mockArticle);
-        when(commentService.save(any(Comment.class))).thenReturn(mockComment);
+                when(articleService.findById(articleId)).thenReturn(mockArticle);
+                when(commentService.save(any(Comment.class))).thenReturn(mockComment);
 
-        String request = objectMapper.writeValueAsString(mockComment);
+                CommentDto commentDto = new CommentDto(commentId, articleId, "test@gmail.com", "test m");
+                String request = objectMapper.writeValueAsString(commentDto);
 
-        this.mockMvc.perform(
-                post("/comments")
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(request)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
-                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())))
-                .andReturn();
-    }
+                this.mockMvc.perform(
+                                post("/comments")
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
+                                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())))
+                                .andReturn();
+        }
 
-    @Test
-    public void shouldUpdateAComment() throws Exception {
-        Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
-        Comment mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
+        @Test
+        public void shouldNotCreateACommentWhenInputIsInvalid() throws Exception {
+                Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
+                Comment mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
 
-        when(articleService.findById(articleId)).thenReturn(mockArticle);
-        when(commentService.update(anyInt(), any(Comment.class))).thenReturn(mockComment);
+                when(articleService.findById(articleId)).thenReturn(mockArticle);
+                when(commentService.save(any(Comment.class))).thenReturn(mockComment);
 
-        String request = objectMapper.writeValueAsString(mockComment);
+                CommentDto commentDto = new CommentDto(commentId, null, "@gmail", "");
+                String request = objectMapper.writeValueAsString(commentDto);
 
-        this.mockMvc.perform(
-                put("/comments/{id}", commentId)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(request)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
-                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())));
-    }
+                this.mockMvc.perform(
+                                post("/comments")
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.email", is(EMAIL_VALIDATION_MESSAGE)))
+                                .andExpect(jsonPath("$.articleId", is(CANNOT_NULL)))
+                                .andExpect(jsonPath("$.text", is(CANNOT_EMPTY_OR_NULL)))
+                                .andReturn();
+        }
+
+        @Test
+        public void shouldUpdateAComment() throws Exception {
+                Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
+                Comment mockComment = new Comment(commentId, mockArticle, "test@gmail.com", "test m");
+
+                when(articleService.findById(articleId)).thenReturn(mockArticle);
+                when(commentService.update(anyInt(), any(Comment.class))).thenReturn(mockComment);
+
+                CommentDto commentDto = new CommentDto(commentId, articleId, "test@gmail.com", "test m");
+                String request = objectMapper.writeValueAsString(commentDto);
+
+                this.mockMvc.perform(
+                                put("/comments/{id}", commentId)
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.email", is(mockComment.getEmail())))
+                                .andExpect(jsonPath("$.article.id", is(mockComment.getArticle().getId())));
+        }
+
+        @Test
+        public void shouldNotUpdateACommentWhenInputIsInvalid() throws Exception {
+                Article mockArticle = new Article(articleId, "TEST", "TEST", EMPIRICAL_STUDY);
+                Comment mockComment = new Comment(commentId, mockArticle, "test@gmail", "test m");
+
+                when(articleService.findById(articleId)).thenReturn(mockArticle);
+                when(commentService.update(anyInt(), any(Comment.class))).thenReturn(mockComment);
+
+                CommentDto commentDto = new CommentDto(commentId, null, "@gmail", "");
+                String request = objectMapper.writeValueAsString(commentDto);
+
+                this.mockMvc.perform(
+                                put("/comments/{id}", commentId)
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.email", is(EMAIL_VALIDATION_MESSAGE)))
+                                .andExpect(jsonPath("$.articleId", is(CANNOT_NULL)))
+                                .andExpect(jsonPath("$.text", is(CANNOT_EMPTY_OR_NULL)))
+                                .andReturn();
+        }
 
     @Test
     public void shouldDeleteAComment() throws Exception {

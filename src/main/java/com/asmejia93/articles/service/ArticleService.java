@@ -13,13 +13,6 @@ import com.asmejia93.articles.repository.CrudRepository;
 public class ArticleService implements CrudRepository<Article> {
 
     public static List<Article> articles = new ArrayList<>();
-    // (Arrays.asList(
-    // new Article(1, "dsfsdfsdfsdf",
-    // randomAlphabetic(200), CASE_STUDY, newArrayList()),
-    // new Article(2, randomAlphabetic(10),
-    // randomAlphabetic(200), EMPIRICAL_STUDY, newArrayList()),
-    // new Article(3, randomAlphabetic(10),
-    // randomAlphabetic(200), LITERATURE_REVIEW, newArrayList())));
 
     public List<Article> findAll() {
         return articles;

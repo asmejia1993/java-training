@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.asmejia93.articles.dto.ArticleDto;
 import com.asmejia93.articles.model.Article;
 import com.asmejia93.articles.service.ArticleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,30 +42,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 public class ArticleControllerTestCandidate {
 
-    private List<Article> articles;
-    private Article article1;
-    private Article article2;
+        private List<Article> articles;
+        private Article article1;
+        private Article article2;
 
-    @Autowired
-    private ObjectMapper objectMapper = new ObjectMapper();
+        private static final String CANNOT_EMPTY_OR_NULL = "Cannot be null/empty";
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockBean
-    private ArticleService articleService;
+        @Autowired
+        private MockMvc mockMvc;
 
-    // Constants
-    private final Integer articleId = 1;
+        @MockBean
+        private ArticleService articleService;
 
-    @Before
-    public void setUp() {
-        articles = new ArrayList<Article>();
-        article1 = new Article(1, "test1", "test2", CASE_STUDY, newArrayList());
-        article2 = new Article(2, randomAlphabetic(10), randomAlphabetic(200), EMPIRICAL_STUDY, newArrayList());
-        articles = newArrayList(article1, article2);
-        ArticleService.articles = articles;
-    }
+        // Constants
+        private final Integer articleId = 1;
+
+        @Before
+        public void setUp() {
+                articles = new ArrayList<Article>();
+                article1 = new Article(1, "test1", "test2", CASE_STUDY, newArrayList());
+                article2 = new Article(2, randomAlphabetic(10), randomAlphabetic(200), EMPIRICAL_STUDY, newArrayList());
+                articles = newArrayList(article1, article2);
+                ArticleService.articles = articles;
+        }
 
     @Test
     public void shouldRetrieveAllArticles() throws Exception {
@@ -87,43 +90,79 @@ public class ArticleControllerTestCandidate {
                 .andExpect(jsonPath("$.body", is(article1.getBody())));
     }
 
-    @Test
-    public void shouldCreateAnArticle() throws Exception {
-        Article mockArticle = new Article(10, "mock article", "mock body", CASE_STUDY);
+        @Test
+        public void shouldCreateAnArticle() throws Exception {
+                Article mockArticle = new Article(10, "mock article", "mock body", CASE_STUDY);
+                ArticleDto mockArticleDto = new ArticleDto(10, "mock article", "mock body", CASE_STUDY);
 
-        when(articleService.save(any(Article.class))).thenReturn(mockArticle);
+                when(articleService.save(any(Article.class))).thenReturn(mockArticle);
 
-        String request = objectMapper.writeValueAsString(mockArticle);
+                String request = objectMapper.writeValueAsString(mockArticleDto);
 
-        this.mockMvc.perform(
-                post("/articles")
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(request)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id", is(mockArticle.getId())))
-                .andExpect(jsonPath("$.title", is(mockArticle.getTitle())))
-                .andReturn();
-    }
+                this.mockMvc.perform(
+                                post("/articles")
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id", is(mockArticle.getId())))
+                                .andExpect(jsonPath("$.title", is(mockArticle.getTitle())))
+                                .andReturn();
+        }
 
-    @Test
-    public void shouldUpdateAnArticle() throws Exception {
-        Article mockArticle = new Article(10, "mock article", "mock body", CASE_STUDY);
+        @Test
+        public void shouldNotCreateAnArticleWhenInputIsEmpty() throws Exception {
+                ArticleDto requestDto = new ArticleDto(10, "", "", CASE_STUDY);
 
-        when(articleService.update(Mockito.anyInt(), any(Article.class))).thenReturn(mockArticle);
+                String request = objectMapper.writeValueAsString(requestDto);
 
-        String request = objectMapper.writeValueAsString(mockArticle);
+                this.mockMvc.perform(
+                                post("/articles")
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.body", is(CANNOT_EMPTY_OR_NULL)))
+                                .andExpect(jsonPath("$.title", is(CANNOT_EMPTY_OR_NULL)))
+                                .andReturn();
+        }
 
-        this.mockMvc.perform(
-                put("/articles/{id}", articleId)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(request)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(mockArticle.getId())))
-                .andExpect(jsonPath("$.title", is(mockArticle.getTitle())))
-                .andReturn();
-    }
+        @Test
+        public void shouldNotCreateAnArticleWhenInputIsNull() throws Exception {
+                ArticleDto requestDto = new ArticleDto(10, null, null, CASE_STUDY);
+
+                String request = objectMapper.writeValueAsString(requestDto);
+
+                this.mockMvc.perform(
+                                post("/articles")
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.body", is(CANNOT_EMPTY_OR_NULL)))
+                                .andExpect(jsonPath("$.title", is(CANNOT_EMPTY_OR_NULL)))
+                                .andReturn();
+        }
+
+        @Test
+        public void shouldUpdateAnArticle() throws Exception {
+                Article mockArticle = new Article(10, "mock article", "mock body", CASE_STUDY);
+                ArticleDto mockArticleDto = new ArticleDto(10, "mock article", "mock body", CASE_STUDY);
+
+                when(articleService.update(Mockito.anyInt(), any(Article.class))).thenReturn(mockArticle);
+
+                String request = objectMapper.writeValueAsString(mockArticleDto);
+
+                this.mockMvc.perform(
+                                put("/articles/{id}", articleId)
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .content(request)
+                                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id", is(mockArticle.getId())))
+                                .andExpect(jsonPath("$.title", is(mockArticle.getTitle())))
+                                .andReturn();
+        }
 
     @Test
     public void shouldDeleteAnArticle() throws Exception {

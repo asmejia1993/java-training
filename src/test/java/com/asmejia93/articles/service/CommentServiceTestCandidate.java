@@ -89,7 +89,6 @@ public class CommentServiceTestCandidate {
 
     @Test
     public void shouldSaveComment() {
-        when(articleService.findById(1)).thenReturn(articles.get(0));
         when(commentService.save(commentArgumentCaptor.capture())).thenReturn(comments.get(0));
 
         Comment comment = new Comment(1, articles.get(0), "test@gmail.com", randomAlphabetic(100));
